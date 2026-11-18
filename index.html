@@ -197,10 +197,10 @@ function hesapla(){
     const per=donemBul(iso(d)), uzun=n>=7, hs=!uzun && hsGunler().includes(d.getDay());
     const p=odaFiyati(room,per,hs,a_,c711);
     const sabit = per && /Bayram|Yılbaşı/.test(per.ad);
-    const tur = sabit ? "Sabit fiyat" : (hs?"Hafta sonu":(uzun?"Hafta içi fiyatı (7+ gece)":"Hafta içi"));
+    const tur = !per ? "Liste dışı" : sabit ? per.ad : (hs?"Hafta sonu":(uzun?"Hafta içi fiyatı (7+ gece)":"Hafta içi"));
     const tarih=d.toLocaleDateString("tr-TR",{day:"numeric",month:"short",year:"numeric"})+" "+gun[d.getDay()];
-    if(p==null){ eksik.push(tarih); rows+=`<tr><td>${tarih}</td><td>${per?per.ad:"Liste dışı"}</td><td>${tur}</td><td class="r warn">Fiyat yok</td></tr>`; }
-    else { toplam+=p; liste++; rows+=`<tr><td>${tarih}</td><td>${per.ad}</td><td>${tur}</td><td class="r">${para(p)}</td></tr>`; }
+    if(p==null){ eksik.push(tarih); rows+=`<tr><td>${tarih}</td><td>${tur}</td><td class="r warn">Fiyat yok</td></tr>`; }
+    else { toplam+=p; liste++; rows+=`<tr><td>${tarih}</td><td>${tur}</td><td class="r">${para(p)}</td></tr>`; }
   }
   const uyari = eksik.length ? `<p class="warn">${eksik.length} gece için fiyat listede yok (${eksik.slice(0,3).join(", ")}${eksik.length>3?"…":""}). Aşağıdaki toplam yalnızca fiyatı olan geceleri içerir.</p>` : "";
   const kisiler = `${a_} yetişkin` + (c711?` + ${c711} çocuk (7-11)`:"") + (c06?` + ${c06} çocuk (0-6, ücretsiz)`:"");
@@ -211,7 +211,7 @@ function hesapla(){
    <div class="note">${liste?`Gecelik ortalama ${para(toplam/liste)} · `:""}${kural}${n>=7?" · 7+ gece: tüm geceler hafta içi fiyatı":""}</div>
    ${uyari}
    ${indirim}
-   <div class="scroll" style="margin-top:14px"><table><tr><th>Gece</th><th>Dönem</th><th>Tür</th><th class="r">Fiyat</th></tr>${rows}</table></div>`;
+   <div class="scroll" style="margin-top:14px"><table><tr><th>Gece</th><th>Tür</th><th class="r">Fiyat</th></tr>${rows}</table></div>`;
   if(!eksik.length && liste){ SON={g:a,c:b,n,a_,c06,c711,toplam}; } mesajYaz();
 }
 
