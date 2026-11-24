@@ -298,6 +298,17 @@ $("takvim").addEventListener("click",e=>{
   tarihYazDegis(); takvimCiz();
   if(tc) takvimKapat();
 });
+// Otomatik güncelleme: ana ekrandaki uygulama eski sürümde kalmasın
+const SURUM="2026-11-24-1";
+async function surumKontrol(){
+  try{
+    const r=await fetch(location.pathname+"?kontrol="+Date.now(),{cache:"no-store"});
+    const m=(await r.text()).match(/SURUM="(\d{4}-\d\d-\d\d-\d+)"/);
+    if(m && m[1]!==SURUM && !location.search.includes("v="+m[1])) location.replace(location.pathname+"?v="+m[1]);
+  }catch(e){}
+}
+surumKontrol();
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) surumKontrol(); });
 hesapla();
 </script>
 </body>
