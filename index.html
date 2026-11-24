@@ -68,6 +68,9 @@ textarea{min-height:440px;line-height:1.5;resize:vertical}
 .cal .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .cal .foot .acts{display:flex;gap:8px}
 .cal .foot button{min-height:40px;padding:8px 14px;font-size:15px}
+.dil{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.dil button{background:transparent;color:var(--ink);border:1px solid var(--line);padding:8px 4px;min-height:42px;font-size:14px;font-weight:600}
+.dil button.on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -94,6 +97,12 @@ textarea{min-height:440px;line-height:1.5;resize:vertical}
 
 <section class="card" id="mesajKart" hidden>
   <h2>Mesaj taslağı</h2>
+  <div id="dilSec" class="dil" role="group" aria-label="Mesaj dili">
+    <button type="button" data-dil="tr" class="on" aria-pressed="true">Türkçe</button>
+    <button type="button" data-dil="en" aria-pressed="false">İngilizce</button>
+    <button type="button" data-dil="ru" aria-pressed="false">Rusça</button>
+    <button type="button" data-dil="de" aria-pressed="false">Almanca</button>
+  </div>
   <label for="mesajInd">Mesajdaki indirimli fiyat</label>
   <select id="mesajInd" style="margin-bottom:12px"></select>
   <label for="mesaj">Metni göndermeden önce düzenleyebilirsin</label>
@@ -151,33 +160,56 @@ function odaFiyati(room, per, hs, a, c){
   return (t==null || isNaN(t)) ? null : t;
 }
 let SON = null;
-const tl = n => n.toLocaleString("tr-TR",{maximumFractionDigits:2}) + " TL";
-const tarihYaz = d => d.toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});
+let DIL = "tr";
+const LOC = {tr:"tr-TR", en:"en-GB", ru:"ru-RU", de:"de-DE"};
+const tl = n => n.toLocaleString(LOC[DIL],{maximumFractionDigits:2}) + " TL";
+const tarihYaz = d => d.toLocaleDateString(LOC[DIL],{day:"numeric",month:"long",year:"numeric"});
+const ruCoul = (n,a,b,c) => { const m=n%100, k=n%10; return (m>10&&m<20) ? c : (k===1 ? a : (k>=2&&k<=4 ? b : c)); };
+const ADI = {
+  tr:{yet:n=>`${n} Yetişkin`, coc:(n,y)=>`${n} Çocuk (${y} yaş)`, gece:n=>`${n} Gece`},
+  en:{yet:n=>`${n} Adult${n>1?"s":""}`, coc:(n,y)=>`${n} ${n>1?"Children":"Child"} (${y} years)`, gece:n=>`${n} Night${n>1?"s":""}`},
+  ru:{yet:n=>`${n} ${ruCoul(n,"взрослый","взрослых","взрослых")}`, coc:(n,y)=>`${n} ${ruCoul(n,"ребёнок","ребёнка","детей")} (${y} лет)`, gece:n=>`${n} ${ruCoul(n,"ночь","ночи","ночей")}`},
+  de:{yet:n=>`${n} ${n>1?"Erwachsene":"Erwachsener"}`, coc:(n,y)=>`${n} ${n>1?"Kinder":"Kind"} (${y} Jahre)`, gece:n=>`${n} ${n>1?"Nächte":"Nacht"}`}
+};
+const MSG = {
+  tr:x=>["Merhaba 🌿","","Tatil planınız için bize ulaştığınız için teşekkür ederiz, sizlere yardımcı olmaktan memnuniyet duyarız.","",
+    "📅 Giriş Tarihi: "+x.gir,"📅 Çıkış Tarihi: "+x.cik,"🌙 Konaklama Süresi: "+x.sure,"👤 Kişi ve Oda Sayısı:","1. Oda - "+x.kisi,"",
+    "Standart Fiyatımız: "+x.std,"İndirimli Fiyatımız: "+x.ind,"",
+    "Konsept:","* Ultra Her Şey Dahil A ’la Carte","",
+    "Rezervasyonunuzu kesinleştirmek için toplam tutarın %30’u kadar ön ödeme gerekmektedir.","Ön ödeme sonrasında rezervasyonunuz adınıza garanti altına alınacaktır.","",
+    "İptal Koşulu:","Giriş tarihine 3 gün kalana kadar yapılan iptallerde ön ödeme iade edilir.","Son 3 gün içinde yapılan iptallerde ön ödeme iade edilmez.","",
+    "Belirtilen şartlar size uygunsa eğer rezervasyon işlemlerine devam edebilmemiz adına isim–soy isim bilgilerinizi bizimle paylaşmanızı rica ederiz."],
+  en:x=>["Hello 🌿","","Thank you for contacting us about your holiday plans. We would be delighted to assist you.","",
+    "📅 Check-in Date: "+x.gir,"📅 Check-out Date: "+x.cik,"🌙 Length of Stay: "+x.sure,"👤 Guests and Rooms:","Room 1 - "+x.kisi,"",
+    "Our Standard Price: "+x.std,"Our Discounted Price: "+x.ind,"",
+    "Concept:","* Ultra All Inclusive À la Carte","",
+    "To confirm your reservation, a prepayment of 30% of the total amount is required.","Once the prepayment is received, your reservation will be guaranteed under your name.","",
+    "Cancellation Policy:","Cancellations made up to 3 days before the check-in date are eligible for a refund of the prepayment.","For cancellations made within the last 3 days, the prepayment is non-refundable.","",
+    "If these terms suit you, please share your first and last name so that we can proceed with your reservation."],
+  ru:x=>["Здравствуйте 🌿","","Благодарим вас за обращение по поводу планирования отпуска. Мы будем рады вам помочь.","",
+    "📅 Дата заезда: "+x.gir,"📅 Дата выезда: "+x.cik,"🌙 Продолжительность проживания: "+x.sure,"👤 Количество гостей и номеров:","Номер 1 - "+x.kisi,"",
+    "Наша стандартная цена: "+x.std,"Наша цена со скидкой: "+x.ind,"",
+    "Концепция:","* Ultra «Всё включено» à la carte","",
+    "Для подтверждения бронирования необходима предоплата в размере 30% от общей суммы.","После внесения предоплаты ваше бронирование будет гарантировано на ваше имя.","",
+    "Условия отмены:","При отмене бронирования не позднее чем за 3 дня до даты заезда предоплата возвращается.","При отмене менее чем за 3 дня до заезда предоплата не возвращается.","",
+    "Если указанные условия вам подходят, просим сообщить ваши имя и фамилию, чтобы мы могли продолжить оформление бронирования."],
+  de:x=>["Hallo 🌿","","vielen Dank, dass Sie sich wegen Ihrer Urlaubsplanung an uns gewandt haben. Wir helfen Ihnen sehr gerne weiter.","",
+    "📅 Anreisedatum: "+x.gir,"📅 Abreisedatum: "+x.cik,"🌙 Aufenthaltsdauer: "+x.sure,"👤 Personen und Zimmer:","1. Zimmer - "+x.kisi,"",
+    "Unser Standardpreis: "+x.std,"Unser Preis mit Rabatt: "+x.ind,"",
+    "Konzept:","* Ultra All Inclusive À la Carte","",
+    "Um Ihre Reservierung zu bestätigen, ist eine Anzahlung in Höhe von 30 % des Gesamtbetrags erforderlich.","Nach Eingang der Anzahlung wird Ihre Reservierung auf Ihren Namen garantiert.","",
+    "Stornobedingungen:","Bei Stornierungen bis 3 Tage vor dem Anreisedatum wird die Anzahlung erstattet.","Bei Stornierungen innerhalb der letzten 3 Tage wird die Anzahlung nicht erstattet.","",
+    "Sofern Ihnen diese Bedingungen zusagen, bitten wir Sie, uns Ihren Vor- und Nachnamen mitzuteilen, damit wir Ihre Reservierung fortsetzen können."]
+};
 function mesajYaz(){
   const kart=$("mesajKart");
   if(!SON){ kart.hidden=true; return; }
-  const {g,c,n,a_,c06,c711,toplam}=SON, [r]=IND[$("mesajInd").value];
-  let kisi = a_+" Yetişkin";
-  if(c711) kisi += " + "+c711+" Çocuk (7-11 yaş)";
-  if(c06) kisi += " + "+c06+" Çocuk (0-6 yaş)";
-  $("mesaj").value = [
-    "Merhaba 🌿","",
-    "Tatil planınız için bize ulaştığınız için teşekkür ederiz, sizlere yardımcı olmaktan memnuniyet duyarız.","",
-    "📅 Giriş Tarihi: "+tarihYaz(g),
-    "📅 Çıkış Tarihi: "+tarihYaz(c),
-    "🌙 Konaklama Süresi: "+n+" Gece",
-    "👤 Kişi ve Oda Sayısı:",
-    "1. Oda - "+kisi,"",
-    "Standart Fiyatımız: "+tl(toplam),
-    "İndirimli Fiyatımız: "+tl(toplam*(100-r)/100),"",
-    "Konsept:","* Ultra Her Şey Dahil A ’la Carte","",
-    "Rezervasyonunuzu kesinleştirmek için toplam tutarın %30’u kadar ön ödeme gerekmektedir.",
-    "Ön ödeme sonrasında rezervasyonunuz adınıza garanti altına alınacaktır.","",
-    "İptal Koşulu:",
-    "Giriş tarihine 3 gün kalana kadar yapılan iptallerde ön ödeme iade edilir.",
-    "Son 3 gün içinde yapılan iptallerde ön ödeme iade edilmez.","",
-    "Belirtilen şartlar size uygunsa eğer rezervasyon işlemlerine devam edebilmemiz adına isim–soy isim bilgilerinizi bizimle paylaşmanızı rica ederiz."
-  ].join("\n");
+  const {g,c,n,a_,c06,c711,toplam}=SON, [r]=IND[$("mesajInd").value], A=ADI[DIL];
+  let kisi = A.yet(a_);
+  if(c711) kisi += " + "+A.coc(c711,"7-11");
+  if(c06) kisi += " + "+A.coc(c06,"0-6");
+  $("mesaj").value = MSG[DIL]({gir:tarihYaz(g), cik:tarihYaz(c), sure:A.gece(n), kisi, std:tl(toplam), ind:tl(toplam*(100-r)/100)}).join("\n");
+  $("dilSec").querySelectorAll("button").forEach(b=>{ const on=b.dataset.dil===DIL; b.classList.toggle("on",on); b.setAttribute("aria-pressed",on); });
   $("kopyaNot").textContent="";
   kart.hidden=false;
 }
@@ -217,6 +249,7 @@ function hesapla(){
 
 $("mesajInd").innerHTML = IND.map(([r,ad],i)=>`<option value="${i}">%${r} ${ad}</option>`).join(""); $("mesajInd").value = "3";
 $("mesajInd").addEventListener("input",mesajYaz);
+$("dilSec").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b||!b.dataset.dil) return; DIL=b.dataset.dil; mesajYaz(); });
 $("kopyala").addEventListener("click",async()=>{ const t=$("mesaj"); let ok=false; try{ await navigator.clipboard.writeText(t.value); ok=true; }catch(e){ try{ t.select(); ok=document.execCommand("copy"); }catch(e2){} } $("kopyaNot").textContent = ok ? "Kopyalandı." : "Kopyalanamadı; metni seçip elle kopyala."; });
 $("oda").innerHTML = R.map((r,i)=>`<option value="${i}">${r.ad}</option>`).join("");
 ["giris","cikis","kisi","c06","c711","oda"].forEach(id=>$(id).addEventListener("input",hesapla));
