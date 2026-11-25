@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Fiyat Paneli</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -18,6 +18,9 @@
 box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#081125;--card:#111e39;--ink:#eaf0fb;--mute:#9fb0cf;--line:#223459;--acc:#d2ad56;--accink:#1a1405;--gold:#d2ad56;--bad:#ff8a80;--range:rgba(210,173,86,.22);--ring:#d2ad56;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);color-scheme:dark}}
 *,*::before,*::after{box-sizing:inherit}
+*{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+.cal,.dil,button{-webkit-user-select:none;user-select:none}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);background-image:radial-gradient(900px 360px at 50% 0,rgba(20,54,127,.10),transparent);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,-apple-system,sans-serif;min-height:100vh}
 .hero{background:linear-gradient(165deg,#0c1d4a,#07122e 65%,#050c22);border-bottom:3px solid var(--gold);padding:calc(20px + env(safe-area-inset-top,0px)) 16px 20px;box-shadow:0 8px 24px -12px rgba(5,12,34,.6)}
@@ -299,7 +302,7 @@ $("takvim").addEventListener("click",e=>{
   if(tc) takvimKapat();
 });
 // Otomatik güncelleme: ana ekrandaki uygulama eski sürümde kalmasın
-const SURUM="2026-11-24-1";
+const SURUM="2026-11-25-1";
 async function surumKontrol(){
   try{
     const r=await fetch(location.pathname+"?kontrol="+Date.now(),{cache:"no-store"});
